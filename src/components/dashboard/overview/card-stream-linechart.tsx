@@ -84,7 +84,7 @@ class DrawStreamLine extends React.Component {
             displayColors: false,
             callbacks: {
               label(context) {
-                const x = 0 - chartItemCount + context.parsed.x;
+                const x = 0 - chartItemCount + (context.parsed.x ?? 0);
                 return `${i18n.t('Time')}: ${x}s, ${i18n.t('QPS')}: ${context.parsed.y}`;
               },
               title() {
