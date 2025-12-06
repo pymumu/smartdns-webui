@@ -219,20 +219,24 @@ function TableUpstreamServers(): React.JSX.Element {
       </Tooltip>
     ),
     onColumnVisibilityChange: (updaterOrValue) => {
-      const newVisibility =
-        typeof updaterOrValue === 'function'
-          ? updaterOrValue(columnVisibility)
-          : updaterOrValue;
-      setColumnVisibility(newVisibility);
-      localStorage.setItem(COLUMN_VISIBILITY_KEY, JSON.stringify(newVisibility));
+        setColumnVisibility((prev) => {
+          const newVisibility =
+              typeof updaterOrValue === 'function'
+                  ? updaterOrValue(prev)
+                  : updaterOrValue;
+          localStorage.setItem(COLUMN_VISIBILITY_KEY, JSON.stringify(newVisibility));
+          return newVisibility;
+        });
     },
     onColumnSizingChange: (updaterOrValue) => {
-      const newSizing =
-        typeof updaterOrValue === 'function'
-          ? updaterOrValue(columnSizing)
-          : updaterOrValue;
-      setColumnSizing(newSizing);
-      localStorage.setItem(COLUMN_SIZING_KEY, JSON.stringify(newSizing));
+      setColumnSizing((prev) => {
+          const newSizing =
+            typeof updaterOrValue === 'function'
+              ? updaterOrValue(prev)
+              : updaterOrValue;
+          localStorage.setItem(COLUMN_SIZING_KEY, JSON.stringify(newSizing));
+          return newSizing;
+        });
     },
     initialState: {
       showGlobalFilter: true,
