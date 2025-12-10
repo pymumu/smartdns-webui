@@ -30,7 +30,7 @@
     "@mui/material": "^7.3.4",
     "@mui/system": "^7.3.3",
     "@mui/utils": "^7.3.3",
-    "@mui/x-date-pickers": "^8.15.0",
+    "@mui/x-date-pickers": "^8.21.0",
     "@tanstack/react-query": "^5.90.5",
     "@xterm/addon-fit": "^0.11.0-beta.135",
     "@xterm/addon-serialize": "^0.14.0-beta.135",
