@@ -31,7 +31,7 @@
     "@mui/system": "^7.3.3",
     "@mui/utils": "^7.3.3",
     "@mui/x-date-pickers": "^8.15.0",
-    "@tanstack/react-query": "^5.90.5",
+    "@tanstack/react-query": "^5.90.12",
     "@xterm/addon-fit": "^0.11.0-beta.135",
     "@xterm/addon-serialize": "^0.14.0-beta.135",
     "@xterm/addon-web-links": "^0.12.0-beta.135",
