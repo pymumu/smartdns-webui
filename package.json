@@ -25,7 +25,7 @@
     "@fontsource/roboto-mono": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
     "@melloware/react-logviewer": "^6.3.4",
-    "@mui/icons-material": "7.3.4",
+    "@mui/icons-material": "7.3.6",
     "@mui/lab": "7.0.1-beta.20",
     "@mui/material": "^7.3.4",
     "@mui/system": "^7.3.3",
