@@ -120,7 +120,26 @@ function TableQueryLogs(): React.JSX.Element {
         accessorKey: 'is_blocked',
         header: t('Is Blocked'),
         size: 150,
-        columnFilterModeOptions: ['equals'],
+        filterVariant: 'select',
+        enableColumnFilterModes: false,
+        filterSelectOptions: [
+          { value: '', label: t('All') },
+          { value: 'true', label: t('Blocked') },
+          { value: 'false', label: t('Allowed') },
+        ],
+        filterFn: (row, _id, value) => {
+          if (value === '') return true;
+          return row.original.is_blocked === (value === 'true');
+        },
+        Cell: ({ cell }) =>
+          cell.getValue<boolean>() ? t('Blocked') : null,
+        muiFilterTextFieldProps: {
+          sx: {
+            '& .MuiInputAdornment-positionEnd': {
+              display: 'none',
+            },
+          },
+        },
         enableColumnActions: false,
       },
       {
