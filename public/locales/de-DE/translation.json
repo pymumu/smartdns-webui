@@ -118,7 +118,7 @@
   "Not implemented yet.": "Nicht Implementiert.",
   "Delete client {{id}} {{client_ip}} successfully.": "Client {{id}} {{client_ip}} gelöscht.",
   "Server request processing has been suspended, please check whether there is enough disk space.": "Bearbeitung unterbrochen. Prüfen Sie, ob genutz Platz auf dem Laufwerk ist.",
-  "Audit log is not enabled, please set \`audit-enable\` to \`yes\` in smartdns config file.": "Audit-Log is inaktiv. Setzen Sie \`audit-enable\` auf \`yes\` in der smartdns.conf-Datei.",
+  "Audit log is not enabled, please set `audit-enable` to `yes` in smartdns config file.": "Audit-Log is inaktiv. Setzen Sie `audit-enable` auf `yes` in der smartdns.conf-Datei.",
   "QPS": "QPS",
   "UI Version": "UI-Version",
   "Server Version": "Server-Version"
