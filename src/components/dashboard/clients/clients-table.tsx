@@ -324,14 +324,14 @@ function TableClients(): React.JSX.Element {
       <MRTActionMenuItem
         icon={<Domain />}
         key="mac_vendor"
-        label="Mac Vendor"
+        label={t('Mac Vendor')}
         onClick={async (e) => { e.preventDefault(); closeMenu(); await handleRowClientMacVendor(row); }}
         table={table}
       />,
       <MRTActionMenuItem
         icon={<Delete />}
         key="delete"
-        label="Delete"
+        label={t('Delete')}
         onClick={async (e) => { e.preventDefault(); closeMenu(); await handleRowDelete(row); }}
         table={table}
       />,
