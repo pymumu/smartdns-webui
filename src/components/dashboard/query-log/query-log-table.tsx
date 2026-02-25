@@ -15,7 +15,7 @@ import {
   type MRT_Cell as MRTCell,
   type MRT_TableInstance as MRTTableInstance,
 } from 'material-react-table';
-import { Card, IconButton, Tooltip } from '@mui/material';
+import { Card, IconButton, Tooltip, Chip } from '@mui/material';
 import { createTheme, useColorScheme } from '@mui/material/styles';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import dayjs from 'dayjs';
@@ -68,6 +68,19 @@ function TableQueryLogs(): React.JSX.Element {
         size: 360,
         enableColumnActions: false,
         columnFilterModeOptions: ['contains', 'equals'],
+        muiTableBodyCellProps: {
+          sx: {
+            maxWidth: '360px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          },
+        },
+        Cell: ({ cell, renderedCellValue }) => (
+          <Tooltip title={cell.getValue<string>()} arrow placement="top">
+            <span>{renderedCellValue}</span>
+          </Tooltip>
+        ),
       },
       {
         accessorKey: 'domain_type',
@@ -82,6 +95,19 @@ function TableQueryLogs(): React.JSX.Element {
         size: 330,
         enableColumnActions: false,
         columnFilterModeOptions: ['equals'],
+        muiTableBodyCellProps: {
+          sx: {
+            maxWidth: '330px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          },
+        },
+        Cell: ({ cell, renderedCellValue }) => (
+          <Tooltip title={cell.getValue<string>()} arrow placement="top">
+            <span>{renderedCellValue}</span>
+          </Tooltip>
+        ),
       },
       {
         accessorKey: 'timestamp',
@@ -115,6 +141,13 @@ function TableQueryLogs(): React.JSX.Element {
         header: t('Group'),
         columnFilterModeOptions: ['equals'],
         enableColumnActions: false,
+        Cell: ({ cell }) => {
+          const group = cell.getValue<string>();
+          if (!group || group === 'default') {
+            return <span>{t('Default')}</span>;
+          }
+          return <span>{group}</span>;
+        },
       },
       {
         accessorKey: 'is_blocked',
@@ -132,7 +165,9 @@ function TableQueryLogs(): React.JSX.Element {
           return row.original.is_blocked === (value === 'true');
         },
         Cell: ({ cell }) =>
-          cell.getValue<boolean>() ? t('Blocked') : null,
+          cell.getValue<boolean>()
+            ? <Chip label={t('Blocked')} color="error" size="small" />
+            : <Chip label={t('Allowed')} color="success" size="small" variant="outlined" />,
         muiFilterTextFieldProps: {
           sx: {
             '& .MuiInputAdornment-positionEnd': {
@@ -439,14 +474,14 @@ function TableQueryLogs(): React.JSX.Element {
       <MRTActionMenuItem
         icon={<Domain />}
         key="whois"
-        label="whois"
+        label={t('whois')}
         onClick={async (e) => { e.preventDefault(); closeMenu(); await handleRowWhois(row); }}
         table={table}
       />,
       <MRTActionMenuItem
         icon={<Delete />}
         key="delete"
-        label="Delete"
+        label={t('Delete')}
         onClick={async (e) => { e.preventDefault(); closeMenu(); await handleRowDelete(row); }}
         table={table}
       />,
