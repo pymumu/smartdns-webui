@@ -181,7 +181,7 @@ function TableClients(): React.JSX.Element {
     if (!shouldFetchData) {
       setShouldFetchData(true);
     }
-  }, [shouldFetchData, columns]);
+  }, [shouldFetchData, columns, pagination]);
 
   const {
     data: { data = [], meta } = {},
@@ -316,7 +316,7 @@ function TableClients(): React.JSX.Element {
       return;
     }
 
-    enqueueSnackbar(t('Delete client {{id}} {{client_ip}} successfully.', { id, clientIP }), { variant: 'success' });
+    enqueueSnackbar(t('Delete client {{id}} {{client_ip}} successfully.', { id, client_ip: clientIP }), { variant: 'success' });
   }, [t, enqueueSnackbar]);
 
   const renderRowMenuItem = (closeMenu: () => void, row: MRTRow<ClientList>, table: MRTTableInstance<ClientList>): React.ReactNode[] => (
