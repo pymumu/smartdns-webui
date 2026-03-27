@@ -3,9 +3,9 @@
 import * as React from 'react';
 import Grid from '@mui/material/Grid';
 import { MetricsCard } from '@/components/dashboard/overview/metrics-card';
-import { type Mertrics } from '@/lib/backend/server';
+import { type Mertrics, type CachedDomainInfo, type DomainList, type QueryLogsParams } from '@/lib/backend/server';
 import { StreamLineChart } from './card-stream-linechart';
-import { Alert, Box } from '@mui/material';
+import { Alert, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Paper, CircularProgress, TextField, Pagination, Select, MenuItem } from '@mui/material';
 import { size2str } from '@/lib/utils';
 import TravelExploreOutlinedIcon from '@mui/icons-material/TravelExploreOutlined';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
@@ -37,6 +37,7 @@ const totalCards = [
             <AdaptiveNumber value={value as number | string} />
         ),
         icon: BlockOutlinedIcon,
+        onClick: undefined,
     },
     {
         accessor: 'qps',
@@ -97,6 +98,7 @@ const totalCards = [
             },
             loading: false,
         },
+        onClick: undefined,
     },
     {
         accessor: 'avg_query_time',
@@ -113,7 +115,24 @@ export function MetricsCards(): React.JSX.Element {
     const [cardata, setCardData] = React.useState<Mertrics | null>(null);
     const [loading, setLoading] = React.useState<boolean>(true);
     const [dataIndex, setDataIndex] = React.useState<number>(0);
+    const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
+    const [domainList, setDomainList] = React.useState<CachedDomainInfo[]>([]);
+    const [order, setOrder] = React.useState<'asc' | 'desc'>('desc');
+    const [orderBy, setOrderBy] = React.useState<'id' | 'domain' | 'qtype'>('id');
+    const [loadingDomains, setLoadingDomains] = React.useState<boolean>(false);
+    const [searchTerm, setSearchTerm] = React.useState<string>('');
+    const [page, setPage] = React.useState<number>(1);
+    const [rowsPerPage, setRowsPerPage] = React.useState<number>(20);
     const reconnectTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+    const [blockedDialogOpen, setBlockedDialogOpen] = React.useState<boolean>(false);
+    const [blockedDomains, setBlockedDomains] = React.useState<DomainList[]>([]);
+    const [blockedLoading, setBlockedLoading] = React.useState<boolean>(false);
+    const [blockedTotal, setBlockedTotal] = React.useState<number>(0);
+    const [blockedPage, setBlockedPage] = React.useState<number>(1);
+    const [blockedRowsPerPage, setBlockedRowsPerPage] = React.useState<number>(20);
+    const [blockedSearchTerm, setBlockedSearchTerm] = React.useState<string>('');
+    const [blockedOrder, setBlockedOrder] = React.useState<'asc' | 'desc'>('desc');
+    const toggleBlockedOrder = () => {setBlockedOrder(prev => prev === 'asc' ? 'desc' : 'asc');};
     const socketRef = React.useRef<WebSocket | null>(null);
     const doClose = React.useRef<boolean>(false);
     const { enqueueSnackbar } = useSnackbar();
@@ -135,6 +154,91 @@ export function MetricsCards(): React.JSX.Element {
     const cardMessage = React.useCallback(async (msg: string) => {
         enqueueSnackbar(msg, { style: { whiteSpace: 'pre-line' } });
     }, [enqueueSnackbar]);
+
+    const handleSort = (property: typeof orderBy) => {
+        const isAsc = orderBy === property && order === 'asc';
+        setOrder(isAsc ? 'desc' : 'asc');
+        setOrderBy(property);
+    };
+
+    const handleViewCacheDomains = React.useCallback(async () => {
+        setDialogOpen(true);
+        setLoadingDomains(true);
+        try {
+            const res = await smartdnsServer.GetCacheDomains();
+            if (res.error) {
+                enqueueSnackbar(t("Failed to load cache domains"), { variant: 'error' });
+                setDialogOpen(false);
+                return;
+            }
+            setDomainList(res.data || []);
+        } catch {
+            enqueueSnackbar(t("Failed to load cache domains"), { variant: 'error' });
+            setDialogOpen(false);
+        } finally {
+            setLoadingDomains(false);
+        }
+    }, [enqueueSnackbar]);
+
+    const sortedDomains = React.useMemo(() => {
+        const searchLower = searchTerm.toLowerCase();
+        const filtered = domainList.filter(item => item.domain.toLowerCase().includes(searchLower) || item.qtype.toString().includes(searchLower));
+        return filtered.toSorted((a, b) => {
+            if (orderBy === 'id') return order === 'asc' ? a.id - b.id : b.id - a.id;
+            if (orderBy === 'domain') return order === 'asc' ? a.domain.localeCompare(b.domain) : b.domain.localeCompare(a.domain);
+            return order === 'asc' ? a.qtype - b.qtype : b.qtype - a.qtype;
+        });
+    }, [domainList, order, orderBy, searchTerm]);
+
+    React.useEffect(() => {
+        setPage(1);
+    }, [searchTerm, order, orderBy, rowsPerPage]);
+
+    const paginatedDomains = React.useMemo(() => {
+        return sortedDomains.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+    }, [sortedDomains, page, rowsPerPage]);
+
+    const fetchBlockedDomains = React.useCallback(async () => {
+        setBlockedLoading(true);
+        try {
+            const params: QueryLogsParams = {
+                page_num: blockedPage,
+                page_size: blockedRowsPerPage,
+                is_blocked: true,
+                order: blockedOrder,
+            };
+            if (blockedSearchTerm) {
+                params.domain = blockedSearchTerm;
+                params.domain_filter_mode = 'contains';
+            }
+            const res = await smartdnsServer.GetQueryLogs(params);
+            if (res.error) {
+                enqueueSnackbar(t("Failed to fetch"), { variant: 'error' });
+                return;
+            }
+            if (res.data) {
+                setBlockedDomains(res.data.domain_list);
+                setBlockedTotal(res.data.total_count);
+            }
+        } catch {
+            enqueueSnackbar(t("Failed to fetch"), { variant: 'error' });
+        } finally {
+            setBlockedLoading(false);
+        }
+    }, [blockedPage, blockedRowsPerPage, blockedSearchTerm, blockedOrder, enqueueSnackbar]);
+
+    React.useEffect(() => {
+        if (blockedDialogOpen) {
+            fetchBlockedDomains();
+        }
+    }, [blockedDialogOpen, blockedPage, blockedRowsPerPage, blockedSearchTerm, blockedOrder, fetchBlockedDomains]);
+
+    const handleViewBlockedDomains = React.useCallback(() => {
+        setBlockedDialogOpen(true);
+        setBlockedPage(1);
+        setBlockedSearchTerm('');
+        setBlockedOrder('desc');
+    }, []);
 
     const connect = React.useCallback((): void => {
         const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
@@ -169,6 +273,20 @@ export function MetricsCards(): React.JSX.Element {
     }, []);
 
     React.useEffect(() => {
+        const blockedCard = totalCards.find(card => card.accessor === 'block_query_count');
+        if (blockedCard) {
+            (blockedCard as { onClick?: () => void }).onClick = handleViewBlockedDomains;
+        }
+    }, [handleViewBlockedDomains]);
+
+    React.useEffect(() => {
+        const cacheCard = totalCards.find(card => card.accessor === 'cache_number');
+        if (cacheCard) {
+            (cacheCard as { onClick?: () => void }).onClick = handleViewCacheDomains;
+        }
+    }, [handleViewCacheDomains]);
+
+    React.useEffect(() => {
         connectRef.current = connect;
     }, [connect]);
 
@@ -193,6 +311,7 @@ export function MetricsCards(): React.JSX.Element {
                         <MetricsCard title={card.title}
                             isloading={loading}
                             icon={card.icon}
+                            onClick={card.onClick ?? undefined}
                             value={cardata?.[card.accessor] ?? 0}
                             bgcolor={card.bgcolor}
                             render={card.render}
@@ -204,6 +323,155 @@ export function MetricsCards(): React.JSX.Element {
                 ))
                 }
             </Grid>
+            <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+                <DialogTitle>{t("Cached Domains")}</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        fullWidth
+                        size="small"
+                        placeholder={t("Search...")}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        sx={{ mb: 2 }}
+                    />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Select
+                            value={rowsPerPage}
+                            onChange={(e) => setRowsPerPage(Number(e.target.value))}
+                            size="small"
+                        >
+                            <MenuItem value={10}>10</MenuItem>
+                            <MenuItem value={20}>20</MenuItem>
+                            <MenuItem value={50}>50</MenuItem>
+                            <MenuItem value={100}>100</MenuItem>
+                        </Select>
+                        <Pagination
+                            count={Math.ceil(sortedDomains.length / rowsPerPage)}
+                            page={page}
+                            onChange={(_, value) => setPage(value)}
+                            color="primary"
+                        />
+                    </Box>
+                    {loadingDomains ? (
+                        <CircularProgress />
+                    ) : (
+                        <TableContainer component={Paper}>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>
+                                            <TableSortLabel active={orderBy === 'id'} direction={orderBy === 'id' ? order : 'asc'} onClick={() => handleSort('id')}>
+                                                {t("ID")}
+                                            </TableSortLabel>
+                                        </TableCell>
+                                        <TableCell>
+                                            <TableSortLabel active={orderBy === 'domain'} direction={orderBy === 'domain' ? order : 'asc'} onClick={() => handleSort('domain')}>
+                                                {t("Domain")}
+                                            </TableSortLabel>
+                                        </TableCell>
+                                        <TableCell>
+                                            <TableSortLabel active={orderBy === 'qtype'} direction={orderBy === 'qtype' ? order : 'asc'} onClick={() => handleSort('qtype')}>
+                                                {t("Type")}
+                                            </TableSortLabel>
+                                        </TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {paginatedDomains.map((item, index) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell>{index + 1 + (page - 1) * rowsPerPage}</TableCell>
+                                            <TableCell>{item.domain}</TableCell>
+                                            <TableCell>{item.qtype}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDialogOpen(false)}>{t("Close")}</Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={blockedDialogOpen} onClose={() => setBlockedDialogOpen(false)} maxWidth="lg" fullWidth>
+                <DialogTitle>{t("Blocked Domains")}</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        fullWidth
+                        size="small"
+                        placeholder={t("Search...")}
+                        value={blockedSearchTerm}
+                        onChange={(e) => setBlockedSearchTerm(e.target.value)}
+                        sx={{ mb: 2 }}
+                    />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Select
+                            value={blockedRowsPerPage}
+                            onChange={(e) => setBlockedRowsPerPage(Number(e.target.value))}
+                            size="small"
+                        >
+                            <MenuItem value={10}>10</MenuItem>
+                            <MenuItem value={20}>20</MenuItem>
+                            <MenuItem value={50}>50</MenuItem>
+                            <MenuItem value={100}>100</MenuItem>
+                        </Select>
+                        <Pagination
+                            count={Math.ceil(blockedTotal / blockedRowsPerPage)}
+                            page={blockedPage}
+                            onChange={(_, value) => setBlockedPage(value)}
+                            color="primary"
+                        />
+                    </Box>
+                    {blockedLoading ? (
+                        <CircularProgress />
+                    ) : (
+                        <TableContainer component={Paper}>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>
+                                            {t("ID")}
+                                        </TableCell>
+                                        <TableCell>
+                                            {t("Domain")}
+                                        </TableCell>
+                                        <TableCell>
+                                            {t("Type")}
+                                        </TableCell>
+                                        <TableCell>
+                                            <TableSortLabel
+                                                active={true}
+                                                direction={blockedOrder}
+                                                onClick={toggleBlockedOrder}
+                                            >
+                                                {t("Time")}
+                                            </TableSortLabel>
+                                        </TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {blockedDomains.map((item, index) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell>{(blockedPage - 1) * blockedRowsPerPage + index + 1}</TableCell>
+                                            <TableCell>{item.domain}</TableCell>
+                                            <TableCell>{item.domain_type}</TableCell>
+                                            <TableCell>{new Date(item.timestamp).toLocaleString()}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {blockedDomains.length === 0 && (
+                                        <TableRow>
+                                            <TableCell colSpan={4} align="center">{t("Not found")}</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setBlockedDialogOpen(false)}>{t("Close")}</Button>
+                </DialogActions>
+            </Dialog>
         </Box >
     );
 }
