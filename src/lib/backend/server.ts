@@ -239,6 +239,16 @@ export interface DailyQueryCountResponse {
     query_timestamp: number;
 }
 
+export interface CachedDomainInfo {
+    id: number;
+    domain: string;
+    qtype: number;
+}
+
+export interface CacheDomainsResponse {
+    domains: CachedDomainInfo[];
+}
+
 export interface LogLevel {
     log_level: string;
 }
@@ -532,6 +542,14 @@ class SmartDNSAPI {
 
     async UpdateSettings(settings: Map<string, string>): Promise<{ error?: ServerError }> {
         return this.server.fetch<null>('/api/config/settings', 'PUT', {}, { settings });
+    }
+
+    async GetCacheDomains(): Promise<{ error?: ServerError, data?: CachedDomainInfo[] | null }> {
+        const ret = await this.server.fetch<CacheDomainsResponse>('/api/cache/domains', 'GET', {}, {});
+        if (ret.error) {
+            return { error: ret.error };
+        }
+        return { data: ret.data?.domains };
     }
 
     async GetOverView(): Promise<{ error?: ServerError, data?: OverViewStats | null }> {
