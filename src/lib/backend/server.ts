@@ -243,6 +243,8 @@ export interface CachedDomainInfo {
     id: number;
     domain: string;
     qtype: number;
+    cached_time: number;
+    ttl_remaining: number;
 }
 
 export interface CacheDomainsResponse {
