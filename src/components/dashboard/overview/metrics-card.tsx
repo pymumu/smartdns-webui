@@ -48,7 +48,8 @@ export function MetricsCard({ title, isloading, icon: Icon, value, bgcolor, rend
                     <Tooltip title={t(actionButton.tooltip)}>
                         <IconButton
                             size="small"
-                            onClick={async (_) => {
+                            onClick={async (e) => {
+                                e.stopPropagation();
                                 if (actionButton.onClick && cardMessage) {
                                     actionButton.onClick(cardMessage, setIsLoadingState);
                                 }
