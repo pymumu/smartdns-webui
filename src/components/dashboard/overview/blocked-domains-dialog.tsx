@@ -23,7 +23,10 @@ export const BlockedDomainsDialog = React.memo(function BlockedDomainsDialog({ o
     const [loading, setLoading] = React.useState(false);
     const [total, setTotal] = React.useState(0);
     const [page, setPage] = React.useState(1);
-    const [rowsPerPage, setRowsPerPage] = React.useState(20);
+    const [rowsPerPage, setRowsPerPage] = React.useState(() => {
+        const saved = localStorage.getItem('blocked-domains-rows-per-page');
+        return saved ? Number.parseInt(saved, 10) : 20;
+    });
     const [searchTerm, setSearchTerm] = React.useState('');
     const [order, setOrder] = React.useState<'asc' | 'desc'>('desc');
     const toggleOrder = () => setOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -58,6 +61,12 @@ export const BlockedDomainsDialog = React.memo(function BlockedDomainsDialog({ o
     }, [page, rowsPerPage, searchTerm, order, enqueueSnackbar]);
 
     React.useEffect(() => {
+        if (rowsPerPage) {
+            localStorage.setItem('blocked-domains-rows-per-page', String(rowsPerPage));
+        }
+    }, [rowsPerPage]);
+
+    React.useEffect(() => {
         if (open) {
             fetchBlockedDomains();
         }
@@ -82,7 +91,11 @@ export const BlockedDomainsDialog = React.memo(function BlockedDomainsDialog({ o
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Select
                         value={rowsPerPage}
-                        onChange={(e) => setRowsPerPage(Number(e.target.value))}
+                        onChange={(e) => {
+                            const newSize = Number(e.target.value);
+                            setRowsPerPage(newSize);
+                            setPage(1);
+                        }}
                         size="small"
                     >
                         <MenuItem value={10}>10</MenuItem>
