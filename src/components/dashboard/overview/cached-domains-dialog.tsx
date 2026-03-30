@@ -25,7 +25,15 @@ export const CachedDomainsDialog = React.memo(function CachedDomainsDialog({ ope
     const [orderBy, setOrderBy] = React.useState<'id' | 'domain' | 'qtype' | 'cached_time'>('id');
     const [searchTerm, setSearchTerm] = React.useState('');
     const [page, setPage] = React.useState(1);
-    const [rowsPerPage, setRowsPerPage] = React.useState(20);
+    const [rowsPerPage, setRowsPerPage] = React.useState(() => {
+        const saved = localStorage.getItem('cachedDomainsRowsPerPage');
+        const parsed = saved ? Number.parseInt(saved, 10) : 20;
+        return [10, 20, 50, 100].includes(parsed) ? parsed : 20;
+    });
+
+    React.useEffect(() => {
+        localStorage.setItem('cachedDomainsRowsPerPage', rowsPerPage.toString());
+    }, [rowsPerPage]);
 
     const handleSort = (property: typeof orderBy) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -72,6 +80,16 @@ export const CachedDomainsDialog = React.memo(function CachedDomainsDialog({ ope
         });
     }, [domainList, order, orderBy, searchTerm]);
 
+    const totalPages = React.useMemo(() => {
+        return Math.max(1, Math.ceil(sortedDomains.length / rowsPerPage));
+    }, [sortedDomains.length, rowsPerPage]);
+
+    React.useEffect(() => {
+        if (!loading && sortedDomains.length > 0 && page > totalPages) {
+            setPage(totalPages);
+        }
+    }, [sortedDomains.length, page, rowsPerPage, totalPages, loading]);
+
     React.useEffect(() => {
         setPage(1);
     }, [searchTerm, order, orderBy, rowsPerPage]);
@@ -104,7 +122,7 @@ export const CachedDomainsDialog = React.memo(function CachedDomainsDialog({ ope
                         <MenuItem value={100}>100</MenuItem>
                     </Select>
                     <Pagination
-                        count={Math.ceil(sortedDomains.length / rowsPerPage)}
+                        count={totalPages}
                         page={page}
                         onChange={(_, value) => setPage(value)}
                         color="primary"
