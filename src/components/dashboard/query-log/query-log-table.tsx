@@ -118,7 +118,7 @@ function TableQueryLogs(): React.JSX.Element {
           return <span>{localTime}</span>;
         },
         filterVariant: 'datetime-range',
-        columnFilterModeOptions: ['equals'],
+        columnFilterModeOptions: false,
         enableColumnActions: false,
         size: 120,
       },
@@ -134,7 +134,7 @@ function TableQueryLogs(): React.JSX.Element {
           }
           return <span>{pingTime} ms</span>;
         },
-        columnFilterModeOptions: ['equals'],
+        columnFilterModeOptions: false,
       },
       {
         accessorKey: 'domain_group',
@@ -184,7 +184,7 @@ function TableQueryLogs(): React.JSX.Element {
           const queryTime = cell.getValue<number>();
           return <span>{queryTime} ms</span>;
         },
-        columnFilterModeOptions: ['equals'],
+        columnFilterModeOptions: false,
         enableColumnActions: false,
       },
       {
