@@ -19,7 +19,8 @@ import { smartdnsServer } from '@/lib/backend/server';
 import { t } from 'i18next';
 import { AdaptiveNumber } from '@/components/common/adaptive-number';
 import { CachedDomainsDialog } from './cached-domains-dialog';
-import { BlockedDomainsDialog } from './blocked-domains-dialog';
+import { paths } from '@/paths';
+import { useRouter } from 'next/navigation';
 
 const totalCards = [
     {
@@ -118,11 +119,11 @@ export function MetricsCards(): React.JSX.Element {
     const [loading, setLoading] = React.useState<boolean>(true);
     const [dataIndex, setDataIndex] = React.useState<number>(0);
     const [cacheDialogOpen, setCacheDialogOpen] = React.useState<boolean>(false);
-    const [blockedDialogOpen, setBlockedDialogOpen] = React.useState<boolean>(false);
     const reconnectTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
     const socketRef = React.useRef<WebSocket | null>(null);
     const doClose = React.useRef<boolean>(false);
     const { enqueueSnackbar } = useSnackbar();
+    const router = useRouter();
     const [isSuspended, setIsSuspended] = React.useState<boolean>(false);
     const connectRef = React.useRef<() => void>(() => { /* will be set below */ });
 
@@ -144,10 +145,6 @@ export function MetricsCards(): React.JSX.Element {
 
     const handleCloseCacheDialog = React.useCallback(() => {
         setCacheDialogOpen(false);
-    }, []);
-
-    const handleCloseBlockedDialog = React.useCallback(() => {
-        setBlockedDialogOpen(false);
     }, []);
 
     const connect = React.useCallback((): void => {
@@ -185,9 +182,9 @@ export function MetricsCards(): React.JSX.Element {
     React.useEffect(() => {
         const blockedCard = totalCards.find(card => card.accessor === 'block_query_count');
         if (blockedCard) {
-            (blockedCard as { onClick?: () => void }).onClick = () => setBlockedDialogOpen(true);
+            (blockedCard as { onClick?: () => void }).onClick = () => router.push(`${paths.dashboard.queryLog}?is_blocked=true`);
         }
-    }, []);
+    }, [router]);
 
     React.useEffect(() => {
         const cacheCard = totalCards.find(card => card.accessor === 'cache_number');
@@ -234,7 +231,6 @@ export function MetricsCards(): React.JSX.Element {
                 }
             </Grid>
             <CachedDomainsDialog open={cacheDialogOpen} onClose={handleCloseCacheDialog} />
-            <BlockedDomainsDialog open={blockedDialogOpen} onClose={handleCloseBlockedDialog} />
         </Box >
     );
 }
