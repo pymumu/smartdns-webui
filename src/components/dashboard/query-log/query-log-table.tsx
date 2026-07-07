@@ -67,7 +67,7 @@ function TableQueryLogs(): React.JSX.Element {
         header: t('Domain'),
         size: 360,
         enableColumnActions: false,
-        columnFilterModeOptions: ['contains', 'equals'],
+        columnFilterModeOptions: ['contains', 'equals', 'notEmpty', 'startsWith', 'endsWith'],
         muiTableBodyCellProps: {
           sx: {
             maxWidth: '360px',
@@ -118,7 +118,7 @@ function TableQueryLogs(): React.JSX.Element {
           return <span>{localTime}</span>;
         },
         filterVariant: 'datetime-range',
-        columnFilterModeOptions: ['equals'],
+        columnFilterModeOptions: false,
         enableColumnActions: false,
         size: 120,
       },
@@ -134,7 +134,7 @@ function TableQueryLogs(): React.JSX.Element {
           }
           return <span>{pingTime} ms</span>;
         },
-        columnFilterModeOptions: ['equals'],
+        columnFilterModeOptions: false,
       },
       {
         accessorKey: 'domain_group',
@@ -184,7 +184,7 @@ function TableQueryLogs(): React.JSX.Element {
           const queryTime = cell.getValue<number>();
           return <span>{queryTime} ms</span>;
         },
-        columnFilterModeOptions: ['equals'],
+        columnFilterModeOptions: false,
         enableColumnActions: false,
       },
       {
@@ -205,7 +205,7 @@ function TableQueryLogs(): React.JSX.Element {
     useState<MRTColumnFilterFnsState>(
       () => Object.fromEntries(
         columns.map(({ accessorKey }) => {
-          return [accessorKey, 'equals'];
+          return [accessorKey, accessorKey === 'domain' ? 'contains' : 'equals'];
         })
       ) as MRTColumnFilterFnsState
     );
@@ -348,8 +348,11 @@ function TableQueryLogs(): React.JSX.Element {
         }
 
         const filterMode = columnFilterFns[filter.id];
-        if (filter.id === 'domain' && filterMode === 'contains') {
-          queryParam['domain_filter_mode'] = filterMode as string;
+        if (filter.id === 'domain') {
+          const supportedModes = ['contains', 'equals', 'notEmpty', 'startsWith', 'endsWith'];
+          if (supportedModes.includes(filterMode)) {
+            queryParam['domain_filter_mode'] = filterMode as string;
+          }
         }
 
         if (filter.id === 'timestamp') {
@@ -547,7 +550,7 @@ function TableQueryLogs(): React.JSX.Element {
     enableColumnOrdering: true,
     enableRowActions: true,
     enableCellActions: true,
-    enableClickToCopy: window.isSecureContext,
+    enableClickToCopy: false,
     enableGlobalFilter: false,
     columnFilterDisplayMode: 'popover',
     enableColumnFilterModes: true,
@@ -569,7 +572,10 @@ function TableQueryLogs(): React.JSX.Element {
         children: errorMsg,
       }
       : undefined,
-    onColumnFilterFnsChange: setColumnFilterFns,
+    onColumnFilterFnsChange: (updaterOrValue) => {
+      pageCursor.current = null;
+      setColumnFilterFns(updaterOrValue);
+    },
     onColumnFiltersChange: (filters) => {
       pageCursor.current = null;
       setColumnFilters(filters);
