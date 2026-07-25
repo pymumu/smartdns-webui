@@ -34,6 +34,7 @@ import { MRT_Localization_ZH_HANS } from 'material-react-table/locales/zh-Hans';
 import i18n from '@/components/core/i18n';
 import { Delete, Domain } from '@mui/icons-material';
 import { type SnackbarOrigin, SnackbarProvider, useSnackbar } from 'notistack';
+import { getDomainTypeName } from './domain-type';
 
 
 interface UserApiResponse {
@@ -88,6 +89,14 @@ function TableQueryLogs(): React.JSX.Element {
         size: 90,
         enableColumnActions: false,
         columnFilterModeOptions: ['equals'],
+        Cell: ({ cell }) => {
+          const type = cell.getValue<number>();
+          return (
+            <Tooltip title={getDomainTypeName(type)} arrow placement="top">
+              <span>{cell.getValue<number>()}</span>
+            </Tooltip>
+          );
+        },
       },
       {
         accessorKey: 'client',
