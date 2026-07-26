@@ -92,8 +92,8 @@ function TableQueryLogs(): React.JSX.Element {
         Cell: ({ cell }) => {
           const type = cell.getValue<number>();
           return (
-            <Tooltip title={getDomainTypeName(type)} arrow placement="top">
-              <span>{cell.getValue<number>()}</span>
+            <Tooltip title={type} arrow placement="top">
+              <span>{getDomainTypeName(type)}</span>
             </Tooltip>
           );
         },
