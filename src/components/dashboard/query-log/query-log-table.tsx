@@ -88,7 +88,7 @@ function TableQueryLogs(): React.JSX.Element {
         header: t('Type'),
         size: 90,
         enableColumnActions: false,
-        columnFilterModeOptions: ['equals'],
+        columnFilterModeOptions: ['equals', 'notEquals'],
         Cell: ({ cell }) => {
           const type = cell.getValue<number>();
           return (
@@ -148,7 +148,7 @@ function TableQueryLogs(): React.JSX.Element {
       {
         accessorKey: 'domain_group',
         header: t('Group'),
-        columnFilterModeOptions: ['equals'],
+        columnFilterModeOptions: ['equals', 'notEquals'],
         enableColumnActions: false,
         Cell: ({ cell }) => {
           const group = cell.getValue<string>();
@@ -359,6 +359,13 @@ function TableQueryLogs(): React.JSX.Element {
         const filterMode = columnFilterFns[filter.id];
         if (filter.id === 'domain' && filterMode === 'contains') {
           queryParam['domain_filter_mode'] = filterMode as string;
+        }
+
+        if (filter.id === 'domain_type' || filter.id === 'domain_group') {
+          const supportedModes = ['equals', 'notEquals'];
+          if (supportedModes.includes(filterMode)) {
+            queryParam[`${filter.id}_filter_mode`] = filterMode as string;
+          }
         }
 
         if (filter.id === 'timestamp') {

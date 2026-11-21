@@ -190,8 +190,10 @@ export interface QueryLogsParams {
     domain?: string;
     domain_filter_mode?: string;
     domain_type?: number;
+    domain_type_filter_mode?: string;
     client?: string;
     domain_group?: string;
+    domain_group_filter_mode?: string;
     reply_code?: number;
     timestamp_before?: number;
     timestamp_after?: number;
@@ -432,12 +434,20 @@ class SmartDNSAPI {
             searchParams.append('domain_type', param.domain_type.toString());
         }
 
+        if (param.domain_type_filter_mode) {
+            searchParams.append('domain_type_filter_mode', param.domain_type_filter_mode);
+        }
+
         if (param.client) {
             searchParams.append('client', param.client);
         }
 
         if (param.domain_group) {
             searchParams.append('domain_group', param.domain_group);
+        }
+
+        if (param.domain_group_filter_mode) {
+            searchParams.append('domain_group_filter_mode', param.domain_group_filter_mode);
         }
 
         if (param.reply_code) {
